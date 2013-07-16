@@ -22,8 +22,9 @@ namespace TimeTracker
         {
             try
             {
-                return
-                    new Database(path).PopulateWith(TypeSerializer.DeserializeFromStream<Database>(File.OpenRead(path)));
+                using (var fileStream = File.OpenRead(path))
+                    return
+                        new Database(path).PopulateWith(TypeSerializer.DeserializeFromStream<Database>(fileStream));
             }
             catch
             {
@@ -33,7 +34,8 @@ namespace TimeTracker
 
         public void Save()
         {
-            TypeSerializer.SerializeToStream(this, File.OpenWrite(_path));
+            using (var fileStream = File.OpenWrite(_path))
+                TypeSerializer.SerializeToStream(this, fileStream);
         }
 
         public void Dispose()

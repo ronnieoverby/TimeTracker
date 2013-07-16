@@ -79,6 +79,8 @@ namespace TimeTracker
                                        Description = Prompt("Description: "),
                                        Time = Prompt("Time ({0}): ", DateTimeOffset.Parse, DateTimeOffset.Now)
                                    });
+
+            DB.Save();
         }
 
         private static T Prompt<T>(string prompt, Func<string, T> parser, T @default = default(T))
