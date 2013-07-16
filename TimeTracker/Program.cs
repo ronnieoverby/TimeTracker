@@ -6,9 +6,12 @@ namespace TimeTracker
 {
     class Program
     {
+        private const string DatabasePath = "data.txt";
+        private static readonly Database DB = Database.Open(DatabasePath);
+
         static void Main()
         {
-            using (Raven.DocStore)
+            using(DB)
             {
                 MenuItem selection;
                 while ((selection = GetMenuSelection()) != MenuItem.Exit)
@@ -41,19 +44,16 @@ namespace TimeTracker
         {
             var since = Prompt("Since ({0}): ", DateTimeOffset.Parse, DateTimeOffset.Now.Date);
             var until = Prompt("Until ({0}): ", DateTimeOffset.Parse, DateTimeOffset.Now);
-            
+
             Console.Clear();
             Console.WriteLine("Records since {0}", since);
             Console.WriteLine("and until {0}", until);
             Console.WriteLine();
 
-            using (var s = Raven.OpenSession())
-            {
-                var records = s.Query<TimeRecord>().Where(x => x.Time >= since && x.Time <= until).OrderBy(x => x.Time);
+            var records = DB.TimeRecords.Where(x => x.Time >= since && x.Time <= until).OrderBy(x => x.Time);
 
-                foreach (var tr in records)
-                    Console.WriteLine("{0,-25} {1}", tr.Time.LocalDateTime, tr.Description);
-            }
+            foreach (var tr in records)
+                Console.WriteLine("{0,-25} {1}", tr.Time.LocalDateTime, tr.Description);
         }
 
         private static MenuItem GetMenuSelection()
@@ -74,16 +74,11 @@ namespace TimeTracker
 
         static void NewTimeRecord()
         {
-            using (var s = Raven.OpenSession())
-            {
-                s.Store(new TimeRecord
-                            {
-                                Description = Prompt("Description: "),
-                                Time = Prompt("Time ({0}): ", DateTimeOffset.Parse, DateTimeOffset.Now)
-                            });
-
-                s.SaveChanges();
-            }
+            DB.TimeRecords.Add(new TimeRecord
+                                   {
+                                       Description = Prompt("Description: "),
+                                       Time = Prompt("Time ({0}): ", DateTimeOffset.Parse, DateTimeOffset.Now)
+                                   });
         }
 
         private static T Prompt<T>(string prompt, Func<string, T> parser, T @default = default(T))
