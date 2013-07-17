@@ -51,7 +51,7 @@ namespace TimeTracker
             PageSelection selection;
             do
             {
-                var skip = page*pageSize - pageSize;
+                var skip = page * pageSize - pageSize;
                 var prompt = new StringBuilder("Choose a record to delete. Page# " + page).AppendLine();
 
                 var items =
@@ -66,27 +66,37 @@ namespace TimeTracker
                     prompt.AppendFormat("{0}: {1} {2}", item.Key, item.Value.Time, item.Value.Description)
                           .AppendLine();
 
-                prompt.AppendFormat("Commands: {0} (Default is {1})", string.Join(", ", Enum.GetNames(typeof(PageSelection))), default(PageSelection))
+                prompt.AppendFormat("Commands: {0} (Default is {1})",
+                                    string.Join(", ",
+                                                Enum.GetNames(typeof (PageSelection)).Select(x => x.MakeReadable())),
+                                    default(PageSelection).ToString().MakeReadable())
                       .AppendLine();
 
-                selection = Prompt(prompt.ToString(), s => (PageSelection)Enum.Parse(typeof(PageSelection), s, true));
+                selection = Prompt(prompt.ToString(), s => (PageSelection)Enum.Parse(typeof(PageSelection), s.RemoveWhitespace(), true));
 
                 Console.Clear();
 
                 switch (selection)
                 {
+                    case PageSelection.FirstPage:
+                        page = 1;
+                        break;
+
                     case PageSelection.Next:
                         page++;
                         continue;
+
                     case PageSelection.Previous:
                         page--;
                         continue;
+
                     case PageSelection.Finished:
                         break;
+
                     default:
                         try
                         {
-                            DB.TimeRecords.Remove(items[(int) selection]);
+                            DB.TimeRecords.Remove(items[(int)selection]);
                             DB.Save();
                         }
                         catch
