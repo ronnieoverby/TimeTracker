@@ -4,6 +4,7 @@
     {
         NewTimeRecord = 1,
         DisplayTimeRecords,
+        DeleteTimeRecord,
         Exit
     }
 }

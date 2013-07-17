@@ -11,7 +11,7 @@ namespace TimeTracker
 
         static void Main()
         {
-            using(DB)
+            using (DB)
             {
                 MenuItem selection;
                 while ((selection = GetMenuSelection()) != MenuItem.Exit)
@@ -34,10 +34,69 @@ namespace TimeTracker
                 case MenuItem.DisplayTimeRecords:
                     DisplayTimeRecords();
                     break;
+                case MenuItem.DeleteTimeRecord:
+                    DeleteTimeRecord();
+                    break;
                 default:
                     Console.WriteLine("Unrecognized selection.");
                     break;
             }
+        }
+
+        private static void DeleteTimeRecord()
+        {
+            const int pageSize = 10;
+            var page = 1;
+
+            PageSelection selection;
+            do
+            {
+                var skip = page*pageSize - pageSize;
+                var prompt = new StringBuilder("Choose a record to delete. Page#: " + page).AppendLine();
+
+                var items =
+                    DB.TimeRecords
+                      .OrderByDescending(x => x.Time)
+                      .Skip(skip)
+                      .Take(pageSize)
+                      .Select((x, i) => new { Record = x, Number = i + 1 })
+                      .ToDictionary(x => x.Number, x => x.Record);
+
+                foreach (var item in items)
+                    prompt.AppendFormat("{0}: {1} {2}", item.Key, item.Value.Time, item.Value.Description)
+                          .AppendLine();
+
+                prompt.AppendFormat("Commands: {0} (Default is {1})", string.Join(", ", Enum.GetNames(typeof(PageSelection))), default(PageSelection))
+                      .AppendLine();
+
+                selection = Prompt(prompt.ToString(), s => (PageSelection)Enum.Parse(typeof(PageSelection), s, true));
+
+                Console.Clear();
+
+                switch (selection)
+                {
+                    case PageSelection.Next:
+                        page++;
+                        continue;
+                    case PageSelection.Previous:
+                        page--;
+                        continue;
+                    case PageSelection.Finished:
+                        break;
+                    default:
+                        try
+                        {
+                            DB.TimeRecords.Remove(items[(int) selection]);
+                            DB.Save();
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Invalid selection.");
+                        }
+                        break;
+                }
+
+            } while (selection != PageSelection.Finished);
         }
 
         private static void DisplayTimeRecords()
@@ -69,7 +128,7 @@ namespace TimeTracker
             prompt.AppendLine();
             prompt.Append("Make a selection: ");
 
-            return Prompt(prompt.ToString(), s => (MenuItem) Enum.Parse(typeof (MenuItem), s.RemoveWhitespace(), true));
+            return Prompt(prompt.ToString(), s => (MenuItem)Enum.Parse(typeof(MenuItem), s.RemoveWhitespace(), true));
         }
 
         static void NewTimeRecord()
@@ -108,6 +167,6 @@ namespace TimeTracker
         {
             return Prompt(prompt, s => s, @default);
         }
-     
+
     }
 }
