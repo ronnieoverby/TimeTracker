@@ -52,7 +52,7 @@ namespace TimeTracker
             do
             {
                 var skip = page*pageSize - pageSize;
-                var prompt = new StringBuilder("Choose a record to delete. Page#: " + page).AppendLine();
+                var prompt = new StringBuilder("Choose a record to delete. Page# " + page).AppendLine();
 
                 var items =
                     DB.TimeRecords
